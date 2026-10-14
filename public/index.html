@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Campus Placement & Training Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="d-flex align-items-center justify-content-center p-3">
+
+    <div class="container" style="max-width: 950px;">
+        <!-- HEADER BRANDING -->
+        <div class="text-center mb-4">
+            <h1 class="fw-extrabold text-white">🎓 Placement Engine</h1>
+            <p class="text-secondary">Automated Campus Placement & Training Portal</p>
+        </div>
+
+        <!-- AUTH NAVIGATION BAR -->
+        <div id="authNav" class="d-flex justify-content-center gap-2 mb-4 auth-nav">
+            <button onclick="switchAuth('studentLogin')" id="btnStudentLogin" class="btn btn-outline-light active">Student Login</button>
+            <button onclick="switchAuth('studentReg')" id="btnStudentReg" class="btn btn-outline-light">Register Student</button>
+            <button onclick="switchAuth('adminLogin')" id="btnAdminLogin" class="btn btn-outline-light btn-admin">Admin Portal</button>
+        </div>
+
+        <!-- 1. STUDENT LOGIN FORM -->
+        <div id="studentLoginForm" class="auth-card mx-auto" style="max-width: 450px;">
+            <h3 class="fw-bold mb-3 text-primary">Student Login</h3>
+            <input id="sEmail" placeholder="Student Email" class="form-control mb-3">
+            <input id="sPass" type="password" placeholder="Password" class="form-control mb-3">
+            <button onclick="login('student')" class="btn btn-primary w-100 py-2 fw-bold">Sign In as Student</button>
+        </div>
+
+        <!-- 2. STUDENT REGISTRATION FORM (WITH RESUME UPLOADER) -->
+        <div id="studentRegForm" class="auth-card mx-auto" style="max-width: 500px; display: none;">
+            <h3 class="fw-bold mb-3 text-info">New Student Registration</h3>
+            <input id="regName" placeholder="Full Name" class="form-control mb-2">
+            <input id="regEmail" placeholder="College Email" class="form-control mb-2">
+            <input id="regPass" type="password" placeholder="Password" class="form-control mb-2">
+            <input id="regGpa" type="number" step="0.1" placeholder="GPA (e.g. 8.2)" class="form-control mb-2">
+            <input id="regBranch" placeholder="Branch (e.g. CSE)" class="form-control mb-2">
+            
+            <label class="form-label text-secondary small fw-bold mt-2 mb-1">Upload Resume (PDF format):</label>
+            <input id="regResume" type="file" accept="application/pdf" class="form-control mb-3">
+
+            <button onclick="register()" class="btn btn-info text-white w-100 py-2 fw-bold">Complete Registration</button>
+        </div>
+
+        <!-- 3. ADMIN LOGIN FORM -->
+        <div id="adminLoginForm" class="auth-card mx-auto" style="max-width: 450px; display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="fw-bold m-0 text-warning">Admin Portal</h3>
+                <span class="badge bg-warning text-dark">Restricted</span>
+            </div>
+            <input id="aEmail" placeholder="Admin Email (admin@college.edu)" class="form-control mb-3">
+            <input id="aPass" type="password" placeholder="Admin Password" class="form-control mb-3">
+            <button onclick="login('admin')" class="btn btn-warning w-100 py-2 fw-bold">Sign In as Officer</button>
+        </div>
+
+        <!-- PORTAL DASHBOARD SECTION -->
+        <div id="portalSection" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded-4 border border-secondary mb-4">
+                <div>
+                    <h5 class="m-0 text-white" id="userWelcome"></h5>
+                    <small id="userRoleBadge" class="text-muted"></small>
+                </div>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+            </div>
+
+            <!-- TABS -->
+            <ul class="nav nav-tabs mb-4 border-secondary">
+                <li class="nav-item"><a class="nav-link active text-white" data-bs-toggle="tab" href="#jobsTab">Active Drives</a></li>
+                <li id="myAppsTabNav" class="nav-item">
+                    <a class="nav-link text-white" data-bs-toggle="tab" href="#myAppsTab" onclick="loadMyApplications()">My Applications</a>
+                </li>
+                <li id="profileTabNav" class="nav-item">
+                    <a class="nav-link text-white" data-bs-toggle="tab" href="#profileTab">My Resume / Profile</a>
+                </li>
+                <li class="nav-item"><a class="nav-link text-white" data-bs-toggle="tab" href="#resourcesTab">Study Materials</a></li>
+                <li id="adminTabNav" class="nav-item" style="display:none;">
+                    <a class="nav-link text-warning fw-bold" data-bs-toggle="tab" href="#adminTab" onclick="loadAllApplications()">⚡ Admin Controls</a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- ACTIVE JOBS TAB -->
+                <div class="tab-pane fade show active" id="jobsTab"><div id="jobList" class="row g-3"></div></div>
+
+                <!-- MY APPLICATIONS TAB (STUDENT) -->
+                <div class="tab-pane fade" id="myAppsTab">
+                    <div id="myAppsList" class="row g-3"></div>
+                </div>
+
+                <!-- STUDENT PROFILE / RESUME UPLOAD TAB -->
+                <div class="tab-pane fade" id="profileTab">
+                    <div class="card dash-card p-4 text-white" style="max-width: 550px;">
+                        <h5 class="fw-bold mb-3 text-info">📄 Manage Resume</h5>
+                        <div id="currentResumeStatus" class="mb-3"></div>
+                        <label class="form-label text-secondary small fw-bold">Upload / Update PDF Resume:</label>
+                        <input id="dashResumeInput" type="file" accept="application/pdf" class="form-control mb-3">
+                        <button onclick="uploadResumeFromDash()" class="btn btn-info text-white fw-bold">Upload Resume</button>
+                    </div>
+                </div>
+
+                <!-- STUDY MATERIALS TAB -->
+                <div class="tab-pane fade" id="resourcesTab"><ul id="resourceList" class="list-group"></ul></div>
+
+                <!-- ADMIN CONTROLS TAB -->
+                <div class="tab-pane fade" id="adminTab">
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6 border-end border-secondary pe-4">
+                            <h5 class="text-warning">Post Placement Drive</h5>
+                            <input id="jobCompany" placeholder="Company Name" class="form-control mb-2">
+                            <input id="jobRole" placeholder="Role" class="form-control mb-2">
+                            <input id="jobGpa" type="number" step="0.1" placeholder="Minimum GPA" class="form-control mb-2">
+                            <input id="jobCtc" placeholder="CTC Package" class="form-control mb-2">
+                            <button onclick="postJob()" class="btn btn-warning w-100">Post Drive</button>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            <h5 class="text-success">Upload Resource</h5>
+                            <input id="resTitle" placeholder="Title" class="form-control mb-2">
+                            <input id="resCategory" placeholder="Category" class="form-control mb-2">
+                            <input id="resLink" placeholder="URL Link" class="form-control mb-2">
+                            <button onclick="postResource()" class="btn btn-success w-100">Add Material</button>
+                        </div>
+                    </div>
+
+                    <!-- APPLICANT MANAGEMENT TABLE WITH RESUME DOWNLOAD -->
+                    <hr class="border-secondary">
+                    <h5 class="text-warning mb-3">📋 Applicant Management & Resumes</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>GPA</th>
+                                    <th>Resume PDF</th>
+                                    <th>Company</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAppsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user'));
+
+        if (token && user) showDashboard();
+
+        function switchAuth(type) {
+            studentLoginForm.style.display = type === 'studentLogin' ? 'block' : 'none';
+            studentRegForm.style.display = type === 'studentReg' ? 'block' : 'none';
+            adminLoginForm.style.display = type === 'adminLogin' ? 'block' : 'none';
+
+            btnStudentLogin.classList.toggle('active', type === 'studentLogin');
+            btnStudentReg.classList.toggle('active', type === 'studentReg');
+            btnAdminLogin.classList.toggle('active', type === 'adminLogin');
+        }
+
+        async function register() {
+            const formData = new FormData();
+            formData.append('name', regName.value);
+            formData.append('email', regEmail.value);
+            formData.append('password', regPass.value);
+            formData.append('gpa', regGpa.value);
+            formData.append('branch', regBranch.value);
+            if (regResume.files[0]) formData.append('resume', regResume.files[0]);
+
+            const res = await fetch('/api/auth/register', { method: 'POST', body: formData });
+            const data = await res.json();
+            alert(data.message || data.error);
+            if (!data.error) switchAuth('studentLogin');
+        }
+
+        async function login(type) {
+            const email = type === 'student' ? sEmail.value : aEmail.value;
+            const password = type === 'student' ? sPass.value : aPass.value;
+
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password, loginType: type })
+            });
+            const data = await res.json();
+
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                token = data.token; user = data.user;
+                showDashboard();
+            } else { alert(data.error); }
+        }
+
+        function showDashboard() {
+            authNav.style.display = 'none';
+            studentLoginForm.style.display = 'none';
+            studentRegForm.style.display = 'none';
+            adminLoginForm.style.display = 'none';
+            portalSection.style.display = 'block';
+
+            userWelcome.innerText = `Welcome, ${user.name}`;
+            userRoleBadge.innerText = user.isAdmin ? 'Role: Placement Officer' : `Student | GPA: ${user.gpa} | Branch: ${user.branch}`;
+
+            // Visibility controls based on role
+            adminTabNav.style.display = user.isAdmin ? 'block' : 'none';
+            myAppsTabNav.style.display = user.isAdmin ? 'none' : 'block';
+            profileTabNav.style.display = user.isAdmin ? 'none' : 'block';
+
+            updateResumeStatusUI();
+            loadJobs();
+            loadResources();
+        }
+
+        function updateResumeStatusUI() {
+            if (user && user.resume) {
+                currentResumeStatus.innerHTML = `<span class="text-success">✅ Resume Attached:</span> <a href="${user.resume}" target="_blank" class="btn btn-sm btn-outline-info ms-2">📄 View Uploaded Resume</a>`;
+            } else {
+                currentResumeStatus.innerHTML = `<span class="text-warning">⚠️ No resume uploaded yet.</span>`;
+            }
+        }
+
+        async function uploadResumeFromDash() {
+            if (!dashResumeInput.files[0]) return alert('Please select a PDF file.');
+            const formData = new FormData();
+            formData.append('resume', dashResumeInput.files[0]);
+
+            const res = await fetch('/api/student/resume', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+
+            if (data.resume) {
+                user.resume = data.resume;
+                localStorage.setItem('user', JSON.stringify(user));
+                updateResumeStatusUI();
+            }
+        }
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            jobList.innerHTML = jobs.map(j => `
+                <div class="col-md-6">
+                    <div class="card dash-card p-4 h-100 text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold m-0">${j.companyName}</h5>
+                            <span class="badge-ctc">${j.ctc}</span>
+                        </div>
+                        <p class="text-secondary mb-3">${j.role}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-secondary">
+                            <span class="badge-gpa">Min GPA: ${j.minGpa}</span>
+                            ${!user.isAdmin ? `<button onclick="apply('${j._id}')" class="btn btn-primary btn-sm">Apply Now</button>` : `<span class="badge bg-secondary">Admin View</span>`}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function apply(jobId) {
+            const res = await fetch('/api/jobs/apply', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                body: JSON.stringify({ jobId }) 
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+        }
+
+        async function loadMyApplications() {
+            const res = await fetch('/api/applications/my', { headers: { 'Authorization': 'Bearer ' + token } });
+            const apps = await res.json();
+            
+            if (apps.length === 0) {
+                myAppsList.innerHTML = `<p class="text-secondary">You haven't applied for any placement drives yet.</p>`;
+                return;
+            }
+
+            myAppsList.innerHTML = apps.map(a => `
+                <div class="col-md-6">
+                    <div class="card dash-card p-4 text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold m-0">${a.jobId ? a.jobId.companyName : 'Company'}</h5>
+                            <span class="badge ${getStatusBadgeClass(a.status)}">${a.status}</span>
+                        </div>
+                        <p class="text-secondary mb-1">${a.jobId ? a.jobId.role : ''}</p>
+                        <small class="text-muted">Applied on: ${new Date(a.createdAt).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadAllApplications() {
+            const res = await fetch('/api/applications/all', { headers: { 'Authorization': 'Bearer ' + token } });
+            const apps = await res.json();
+
+            adminAppsTable.innerHTML = apps.map(a => `
+                <tr>
+                    <td><strong>${a.studentId ? a.studentId.name : 'N/A'}</strong><br><small class="text-muted">${a.studentId ? a.studentId.email : ''}</small></td>
+                    <td><span class="badge bg-secondary">${a.studentId ? a.studentId.gpa : 'N/A'}</span></td>
+                    <td>
+                        ${a.studentId && a.studentId.resume ? `<a href="${a.studentId.resume}" target="_blank" class="btn btn-sm btn-outline-info">📄 View Resume</a>` : '<span class="text-muted small">No File</span>'}
+                    </td>
+                    <td>${a.jobId ? a.jobId.companyName : 'N/A'}</td>
+                    <td>${a.jobId ? a.jobId.role : 'N/A'}</td>
+                    <td><span class="badge ${getStatusBadgeClass(a.status)}">${a.status}</span></td>
+                    <td>
+                        <select class="form-select form-select-sm bg-dark text-white border-secondary" onchange="updateStatus('${a._id}', this.value)">
+                            <option value="">Change...</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Shortlisted">Shortlisted</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Offered">Offered</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateStatus(appId, newStatus) {
+            if (!newStatus) return;
+            const res = await fetch(`/api/applications/${appId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            loadAllApplications();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Offered': return 'bg-success';
+                case 'Shortlisted': return 'bg-info text-dark';
+                case 'Interview Scheduled': return 'bg-warning text-dark';
+                case 'Rejected': return 'bg-danger';
+                default: return 'bg-primary';
+            }
+        }
+
+        async function loadResources() {
+            const res = await fetch('/api/resources');
+            const resources = await res.json();
+            resourceList.innerHTML = resources.map(r => `
+                <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between align-items-center mb-2 rounded-3">
+                    <div><strong>${r.title}</strong> <span class="badge bg-secondary ms-2">${r.category}</span></div>
+                    <a href="${r.link}" target="_blank" class="btn btn-sm btn-success">Access Link</a>
+                </li>
+            `).join('');
+        }
+
+        async function postJob() {
+            const body = { companyName: jobCompany.value, role: jobRole.value, minGpa: parseFloat(jobGpa.value), ctc: jobCtc.value };
+            const res = await fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+            const data = await res.json();
+            alert(data.message || data.error);
+            if (!data.error) loadJobs();
+        }
+
+        async function postResource() {
+            const body = { title: resTitle.value, category: resCategory.value, link: resLink.value };
+            const res = await fetch('/api/resources', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+            alert('Resource Added!');
+            loadResources();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
